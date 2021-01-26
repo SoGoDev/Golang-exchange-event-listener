@@ -44,9 +44,16 @@ func (p *Pool) Start() {
 			}
 
 			for k, v := range p.Clients {
+
+				if len(v) == 0 {
+					p.SendQuotesMessage(k, m.Data[0])
+					continue
+				}
+
 				for i := 0; i < len(v); i++ {
 					if m.Data[0].Symbol == v[i] {
 						p.SendQuotesMessage(k, m.Data[0])
+						continue
 					}
 				}
 			}

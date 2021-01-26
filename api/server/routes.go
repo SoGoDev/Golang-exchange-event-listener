@@ -1,38 +1,28 @@
 package server
 
 import (
-	"fmt"
+	"Golang-exchange-event-listener/internal/client"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	"net/http"
 )
 
+type Manager interface {
+	ConnectNewClient(c *client.Client)
+	DisconnectClient(c *client.Client)
+}
+
 var wsupgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
+	CheckOrigin:     func(r *http.Request) bool { return true },
 }
 
-func WebSocketListener(w http.ResponseWriter, r *http.Request) {
-	conn, err := wsupgrader.Upgrade(w, r, nil)
-	if err != nil {
-		fmt.Println("Failed to set websocket upgrade: %+v", err)
-		return
-	}
-
-	for {
-		t, msg, err := conn.ReadMessage()
-		if err != nil {
-			break
-		}
-		conn.WriteMessage(t, msg)
-	}
-}
-
-func SetupServer() *gin.Engine {
+func SetupServer(reg Manager) *gin.Engine {
 	e := gin.Default()
 
 	e.GET("/ws", func(c *gin.Context) {
-		WebSocketListener(c.Writer, c.Request)
+		WebSocketListener(reg)(c.Writer, c.Request)
 	})
 
 	return e
